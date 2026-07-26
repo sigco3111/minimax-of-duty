@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { t } from '../i18n/index.js';
 
 /**
  * Scripted mid-combat HUD state for `debugState('combat')`.
@@ -123,7 +124,7 @@ export class CombatDemo {
         ui.arcs.spawn(-0.72, 0.69, 0.8); // behind-left
         break;
       case 40:
-        ui.banner.show('Enemy Eliminated', '+100 XP');
+        ui.banner.show(t('feed.enemyEliminated'), t('xp.regular', { xp: 100 }));
         break;
       case 50:
         ui.markers.spawnGrenade(this._worldPoint(ui, 9, -3.4, -1.3), 2.6);
@@ -138,7 +139,7 @@ export class CombatDemo {
         break;
       case 128:
         ui.hitmarker('kill');
-        ui.banner.show('Enemy Eliminated', '+100 XP');
+        ui.banner.show(t('feed.enemyEliminated'), t('xp.regular', { xp: 100 }));
         ui.damageNumber(this._worldPoint(ui, 13, 1.1, 0.2), 118, 'kill');
         break;
       case 150:

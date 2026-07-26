@@ -1,4 +1,5 @@
 import { el, setText, setStyle, setClass, clamp01, damp, ease, lerp } from './util.js';
+import { t } from '../i18n/index.js';
 
 /**
  * Health feedback: the screen-space hurt state *and* the vitals widget.
@@ -36,7 +37,7 @@ export class HealthFx {
     // ---- vitals widget ----------------------------------------------------
     this.vitals = el('div', 'ow-vitals', chrome);
     const head = el('div', 'ow-vt-head', this.vitals);
-    el('div', 'ow-vt-lbl', head, 'Health');
+    el('div', 'ow-vt-lbl', head, t('hud.health'));
     this.hpNum = el('div', 'ow-vt-num', head);
     this.hpVal = el('span', null, this.hpNum, '100');
     this.hpMax = el('i', null, this.hpNum, '/100');
@@ -45,7 +46,7 @@ export class HealthFx {
     el('u', null, track); // segment dividers, drawn over the fill
 
     this.armour = el('div', 'ow-armour', this.vitals);
-    el('div', 'ow-vt-lbl', this.armour, 'Armour');
+    el('div', 'ow-vt-lbl', this.armour, t('hud.armour'));
     const plates = el('div', 'ow-arm-plates', this.armour);
     this.plates = new Array(3);
     for (let i = 0; i < 3; i++) {

@@ -1,4 +1,5 @@
 import { el, setText, setStyle, clamp, damp, ease } from './util.js';
+import { t, setLocale, getLocale, onLocaleChange, SUPPORTED_LOCALES } from '../i18n/index.js';
 
 const PRESETS = ['low', 'medium', 'high', 'ultra'];
 
@@ -19,7 +20,7 @@ export class PauseMenu {
     this.root = el('div', 'ow-menu', parent);
     const inner = el('div', 'ow-menu-inner', this.root);
 
-    const h = el('h1', null, inner, 'Paused');
+    const h = el('h1', null, inner, '');
     h.textContent = 'PAUSED';
     el('div', 'sub', inner, 'OVERWATCH — TACTICAL OPERATIONS');
     el('div', 'rule', inner);
@@ -28,24 +29,24 @@ export class PauseMenu {
 
     // ---- quality preset --------------------------------------------------
     this.qBtns = [];
-    const qRow = this._row('Graphics Preset');
+    const qRow = this._row(t('menu.graphics'));
     const seg = el('div', 'ow-seg', qRow);
     for (const p of PRESETS) {
-      const b = el('button', null, seg, p);
+      const b = el('button', null, seg, '');
       b.type = 'button';
       b.addEventListener('click', () => this.setQuality(p));
       this.qBtns.push(b);
     }
 
     // ---- sensitivity -----------------------------------------------------
-    this.sens = this._slider('Mouse Sensitivity', 0.2, 3.0, 0.01, (v) => {
+    this.sens = this._slider(t('menu.sensitivity'), 0.2, 3.0, 0.01, (v) => {
       this.ctx.config.sensitivity = 0.0022 * v;
       this.ctx.events.emit('ui:sensitivity', { value: this.ctx.config.sensitivity, multiplier: v });
       return v.toFixed(2);
     });
 
     // ---- field of view ---------------------------------------------------
-    this.fov = this._slider('Field Of View', 65, 120, 1, (v) => {
+    this.fov = this._slider(t('menu.fov'), 65, 120, 1, (v) => {
       this.ctx.config.fov = v;
       const cam = this.ctx.camera;
       if (cam) {
@@ -57,12 +58,12 @@ export class PauseMenu {
     });
 
     // ---- invert look -----------------------------------------------------
-    const invRow = this._row('Invert Look');
+    const invRow = this._row(t('menu.invertLook'));
     const invSeg = el('div', 'ow-seg', invRow);
     this.invBtns = [];
     for (const [label, val] of [
-      ['off', false],
-      ['on', true],
+      [t('menu.off'), false],
+      [t('menu.on'), true],
     ]) {
       const b = el('button', null, invSeg, label);
       b.type = 'button';
@@ -74,26 +75,72 @@ export class PauseMenu {
       this.invBtns.push([b, val]);
     }
 
+    // ---- language toggle (한↔영) ---------------------------------------------
+    const langRow = this._row(t('menu.language'));
+    const langSeg = el('div', 'ow-seg', langRow);
+    this.langBtns = [];
+    for (const loc of SUPPORTED_LOCALES) {
+      const lbl = loc === 'ko' ? '한국어' : 'English';
+      const b = el('button', null, langSeg, lbl);
+      b.type = 'button';
+      b.addEventListener('click', () => {
+        setLocale(loc);
+        // Live re-render of every row label below.
+        this.paintMenu();
+        this.syncFromConfig();
+      });
+      this.langBtns.push([b, loc]);
+    }
+
     // ---- buttons ---------------------------------------------------------
     const btns = el('div', 'ow-btns', inner);
-    this.resumeBtn = el('button', 'ow-btn primary', btns, 'Resume');
+    this.resumeBtn = el('button', 'ow-btn primary', btns, t('menu.resume'));
     this.resumeBtn.type = 'button';
     this.resumeBtn.addEventListener('click', () => this.close());
-    const reset = el('button', 'ow-btn', btns, 'Defaults');
+    const reset = el('button', 'ow-btn', btns, t('menu.defaults'));
     reset.type = 'button';
+    this._defaultsBtn = reset;
     reset.addEventListener('click', () => {
       this.sens.set(1);
       this.fov.set(80);
       this.ctx.config.invertY = false;
       this.setQuality('ultra');
     });
-    el('div', 'hint', inner, 'ESC RESUME · WASD MOVE · SHIFT SPRINT · R RELOAD · F USE');
+    this._hintEl = el('div', 'hint', inner, t('menu.hint'));
 
     this.open = false;
     this.shown = 0;
     setStyle(this.root, 'display', 'none');
     setStyle(this.root, 'cursor', 'default');
     this.syncFromConfig();
+
+    // Any future setLocale() — from any system, this tab, or another tab —
+    // re-paints the visible labels so the toggle is bidirectional without a
+    // reload.
+    this._unsubLocale = onLocaleChange(() => this.paintMenu());
+  }
+
+  /**
+   * Refresh every text node we've already created, after the active locale
+   * changed. Cheap: walks a small set of DOM refs collected during build.
+   * Anything that *itself* updates on a timer (preset/invert highlight)
+   * lives in `syncFromConfig` and keeps working unchanged.
+   */
+  paintMenu() {
+    if (!this._refs) return;
+    for (const [el, key] of this._refs) setText(el, t(key));
+    // Slider labels were created inline during _slider() so rebuild them via
+    // the recorded keys.
+    if (this._rowKeys) {
+      const names = this.rows.querySelectorAll('.ow-row .name');
+      const keys = ['menu.graphics', 'menu.sensitivity', 'menu.fov', 'menu.invertLook', 'menu.language'];
+      for (let i = 0; i < names.length && i < keys.length; i++) {
+        setText(names[i], t(keys[i]).toUpperCase());
+      }
+    }
+    if (this._hintEl) setText(this._hintEl, t('menu.hint'));
+    if (this.resumeBtn) setText(this.resumeBtn, t('menu.resume'));
+    if (this._defaultsBtn) setText(this._defaultsBtn, t('menu.defaults'));
   }
 
   _row(name) {
@@ -144,9 +191,17 @@ export class PauseMenu {
 
   syncFromConfig() {
     const cfg = this.ctx.config;
-    for (let i = 0; i < this.qBtns.length; i++)
+    for (let i = 0; i < this.qBtns.length; i++) {
       this.qBtns[i].classList.toggle('on', PRESETS[i] === cfg.quality);
+      // Buttons were created with empty textContent so we could defer
+      // localisation; paint from the active locale each sync.
+      this.qBtns[i].textContent = t('quality.' + PRESETS[i]);
+    }
     for (const [b, v] of this.invBtns) b.classList.toggle('on', !!cfg.invertY === v);
+    if (this.langBtns) {
+      const cur = getLocale();
+      for (const [b, loc] of this.langBtns) b.classList.toggle('on', loc === cur);
+    }
     this.sens?.set((cfg.sensitivity ?? 0.0022) / 0.0022);
     this.fov?.set(cfg.fov ?? 80);
   }
@@ -194,6 +249,7 @@ export class PauseMenu {
   }
 
   dispose() {
+    this._unsubLocale?.();
     this.root.remove();
   }
 }

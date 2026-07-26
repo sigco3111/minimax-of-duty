@@ -13,6 +13,7 @@ import { WorldMarkers } from './markers.js';
 import { Prompt, Banner } from './prompts.js';
 import { PauseMenu } from './menu.js';
 import { CombatDemo } from './demo.js';
+import { t } from '../i18n/index.js';
 
 const MAX_BLIPS = 48;
 
@@ -197,7 +198,10 @@ export class UiSystem {
           headshot: !!e.headshot,
           mine: true,
         });
-        this.banner.show('Enemy Eliminated', e.headshot ? '+150 XP · HEADSHOT' : '+100 XP');
+        this.banner.show(
+          t('feed.enemyEliminated'),
+          e.headshot ? t('xp.headshot', { xp: 150 }) : t('xp.regular', { xp: 100 })
+        );
         this.state.scoreUs++;
       }
     });

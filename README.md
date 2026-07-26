@@ -1,125 +1,105 @@
-# Claude of Duty
+# Minimax of Duty
 
-Get updates [here](https://shumer.dev/newsletter).
+> **mshumer의 [Claude of Duty](https://github.com/mshumer/Claude-of-Duty) 한국어 fork.**
+> 브라우저에서 돌아가는 1인칭 슈팅(FPS). Three.js r180 + WebGL2.
+> 원본은 Opus 5가 멀티에이전트 오케스트레이션으로 약 1.5일 만에 만든 **55,000줄 / 11 서브시스템** 작품이고,
+> 본 fork는 그 결과물을 **한국어 환경에 맞게 재현·확장**하는 것이 목표다.
 
-A first-person shooter built in the browser with Three.js r180 and WebGL2. Roughly
-55k lines across 11 subsystems, written by a fleet of AI agents under orchestration.
+**[원본 저장소](https://github.com/mshumer/Claude-of-Duty)** · **[라이선스: MIT](./LICENSE)** (Copyright 2026 mshumer)
 
-**There are no art assets.** Every texture, mesh, animation and sound is generated
-procedurally at load time from code. No models, no HDRIs, no image files, no audio
-files. The only runtime dependency is `three`.
+---
 
-```bash
-npm install
-npm run dev          # http://127.0.0.1:5173
-```
+## 한국어 안내
 
-Click the canvas to lock the cursor. WASD move, mouse aim, LMB fire, RMB ADS,
-R reload, Shift sprint, Ctrl crouch, Space jump, Q/E lean, Esc release.
+- **아트 에셋이 전혀 없다.** 텍스처·메시·애니메이션·사운드 전부 코드로 **프로시저럴 생성**. 모델·HDRI·이미지·오디오 파일 일절 없음. 런타임 의존성은 `three` 단 하나.
+- **실행:**
+  ```bash
+  npm install
+  npm run dev          # http://127.0.0.1:5173
+  ```
+  캔버스 클릭 → 커서 고정. WASD 이동, 마우스 조준, 좌클릭 발사, 우클릭 ADS, R 재장전, Shift 스프린트, Ctrl 앉기, Space 점프, Q/E 기울이기, Esc 마우스 해제.
 
-## What's in it
+- **폴더 구조:**
+  | 폴더 | 역할 |
+  |---|---|
+  | `render` | HDR 파이프라인, 캐스케이드 섀도우 맵(`sampler2DArray` + 텍셀 스냅 + PCSS), MRT 깊이/법선/속도 프리패스, GTAO, YCoCg variance clipping TAA, 타일-확장 모션 블러, Karis 블룸 피라미드, GPU EV100 미터링, 프로시저럴 33³ grade LUT, AgX 컴포지트 |
+  | `materials` | GPU 텍스처 포지. 19종 표면(콘크리트·벽돌·석고·아스팔트·모래·녹슨/페인트/브러시드 금속·나무·천·마대·유리…), 주기적 노이즈로 완벽 타일링, Sobel 높이→법선, 시차 매핑, 삼면 투영, 곡률 기반 가장자리 마모 |
+  | `sky` | 대기 산란, 시간대, PMREM 환경 생성, 볼류메트릭 포그/광선 |
+  | `world` | ~120×120 m 거리: 실제 벽 두께 + 진입 가능한 인테리어를 가진 모듈러 빌딩 키트, 수백 개 인스턴싱 소품 |
+  | `physics` | 외부 라이브러리 없음. Binned-SAH BVH(29k tris → 14k nodes, 22 ms, 0.25 µs/레이캐스트), 5-plane crease stack 스웹트 캡슐 캐릭터 컨트롤러, CCD 강체, PBD 래그돌, 다층 총알 관통 |
+  | `player` | 이동 상태머신, 슬라이드/맨틀/리닝, 카메라 필 |
+  | `weapons` | 프로시저럴 무기 지오메트리, 뷰모델 릭, ADS, 스프링 리코일, 프로시저럴 재장전, 비행시간·탄도 적용 |
+  | `fx` | GPU 파티클, 데칼, 트레이서, 머즐 플래시, 폭발 |
+  | `ai` | 스킨드 솔저, 내비메시 패싱, 인식, 엄폐 행동, 래그돌 사망 |
+  | `ui` | DOM/CSS HUD: 크로스헤어, 히트마커, 미니맵, 컴퍼스, 킬피드 |
+  | `audio` | Web Audio 신디. 무음 파일 사용 안 함. 레이어드 사격음, 컨볼루션 리버브, HRTF 입체 음향, 차폐 |
 
-| subsystem | what it does |
+`ARCHITECTURE.md`는 멀티에이전트가 작업할 때 따라간 **계약서**다. 서브시스템 인터페이스, 디렉터리 소유권, 서브시스템 간 이벤트 어휘, 공유 surface 타입이 명시돼 있다.
+
+## 툴 / 하네스
+
+| 도구 | 용도 |
 |---|---|
-| `render` | HDR pipeline, cascaded shadow maps in a `sampler2DArray` with texel snapping and PCSS contact hardening, MRT depth/normal/velocity prepass, GTAO, TAA with YCoCg variance clipping, tile-dilated motion blur, Karis bloom pyramid, GPU EV100 metering, procedural 33³ grade LUT, AgX composite |
-| `materials` | GPU texture forge: 19 procedural surfaces (concrete, brick, plaster, asphalt, sand, rusted/painted/brushed metal, wood, fabric, burlap, glass…), periodic noise so everything tiles seamlessly, Sobel height→normal, parallax occlusion mapping, triplanar projection, curvature-driven edge wear |
-| `sky` | Atmospheric scattering, time of day, PMREM environment generation, volumetric fog and light shafts |
-| `world` | ~120×120 m market street: modular building kit with real wall thickness, enterable interiors, several hundred instanced props |
-| `physics` | Written from scratch, no library. Binned-SAH BVH (29k tris → 14k nodes in 22 ms, 0.25 µs/raycast), swept-capsule character controller with a 5-plane crease stack, impulse rigid bodies with CCD, PBD ragdolls, multi-layer bullet penetration |
-| `player` | Movement state machine, slide/mantle/lean, camera feel |
-| `weapons` | Procedural weapon geometry, viewmodel rig, ADS, spring recoil, procedural reloads, ballistics with travel time and drop |
-| `fx` | GPU particles, decals, tracers, muzzle flash, explosions |
-| `ai` | Skinned soldiers, navmesh pathing, perception, cover behaviour, ragdoll death |
-| `ui` | DOM/CSS HUD: crosshair, hitmarkers, minimap, compass, killfeed |
-| `audio` | Web Audio synthesis — no sound files. Layered weapon fire, convolution reverb, HRTF spatialisation, occlusion |
+| `tools/capture.mjs` | GPU 가속 헤드리스 Chromium으로 단일 샷 캡처 |
+| `tools/shotset.mjs` | 11장 샷을 한 세션에서 빠르게 리뷰 |
+| `tools/baseline.mjs` | **재현 가능한** 캡처. 각 샷을 격리된 페이지에서, 고정 프레임 예산. 실행 간 비트 동일 |
+| `tools/imagediff.mjs` | 픽셀 단위 게이트. 한 픽셀이라도 움직으면 0이 아닌 종료 코드 |
+| `tools/profile.mjs` | 실제 디바이스 DPR에서 게임플레이 프로파일러. 프레임 시간 **분포**(p50/p95/p99) + hitch 원인을 WebGL 프로그램 카운트로 어트리뷰트 |
+| `tools/playtest.mjs` | 스크립트 기반 이동/발사 스모크 테스트 |
 
-`ARCHITECTURE.md` is the contract the agents worked against: subsystem interface,
-directory ownership, the cross-subsystem event vocabulary, and shared surface types.
+### 두 가지 가치가 있는 발견(이전 측정값을 모두 무효화함)
 
-## Tooling
+**중간값 프레임 타임이 실제 문제를 가린다.** 정적 카메라 벤치마크는 94 fps를 보고했지만 게임은 플레이 불가 수준이었다. 실제 게임플레이(Retina DPR, 내부 3.34 MP, 광고상의 2.07 아님)는 12–17 fps에 **728–1236 ms 스톨**이 끼어 있었고, 원인은 게임 도중 34개 이상의 WebGL 프로그램이 지연 컴파일됐기 때문이다. `profile.mjs`가 p50/p95/p99을 리포팅하고 hitch 어트리뷰션을 제공하기 때문에 이 문제가 드러났다.
 
-The interesting part of this repo is arguably the harness, not the game.
+**캡처가 재현 불가능했다.** `shotset.mjs`는 11장 샷에 한 페이지를 재사용해서 파티클 수명·데칼 버퍼·노출 상태가 다음 샷으로 새어 들어갔다. 동일한 두 번의 실행이 11장 중 10장에서 달랐다. `baseline.mjs`는 각 샷을 새 페이지에서 격리해서 비트 동일하게 만들고, `imagediff.mjs`가 진짜로 쓸 수 있는 게이트가 됐다.
 
-| tool | purpose |
-|---|---|
-| `tools/capture.mjs` | Screenshot one named shot via GPU-backed headless Chromium |
-| `tools/shotset.mjs` | All 11 shots in one session — fast review set |
-| `tools/baseline.mjs` | **Reproducible** capture: each shot in an isolated page, fixed frame budget. Bit-identical across runs |
-| `tools/imagediff.mjs` | Per-pixel gate. Exits non-zero if any pixel moved |
-| `tools/profile.mjs` | Gameplay profiler at real device pixel ratio. Frame-time *distribution* and hitch attribution via per-frame WebGL program counts |
-| `tools/playtest.mjs` | Scripted movement/fire smoke test |
+## 성능
 
-Two findings worth recording, because both invalidated earlier measurements:
+Apple Silicon 노트북, 1512×982, DPR 2(3.34 MP 내부), `ultra` 프리셋, 3회 측정, AI·발사 활성화된 실제 게임플레이 기준:
 
-**Median frame time hides the actual problem.** A static-camera benchmark reported
-94 fps while the game was unplayable. Real gameplay at Retina DPR (internal 3.34 MP,
-not 2.07) ran 12–17 fps with **728–1236 ms stalls** caused by 34+ WebGL programs
-compiling lazily mid-frame. `profile.mjs` reports p50/p95/p99 and attributes each
-hitch, which is what surfaced it.
-
-**Captures were not reproducible.** `shotset.mjs` reuses one page across all 11
-shots, so particle age, decal buffers and exposure state leak forward — two identical
-runs differed on 10 of 11 shots. `baseline.mjs` isolates each shot in a fresh page,
-which is bit-identical and is what makes `imagediff.mjs` a usable gate.
-
-## Performance
-
-Measured on an Apple silicon laptop at 1512×982, DPR 2 (3.34 MP internal), `ultra` preset,
-3 runs, gameplay in motion with AI and firing active:
-
-| | before optimization | after |
+| | 최적화 전 | 후 |
 |---|---|---|
 | fps p50 | 12–17 | **28–30** |
 | fps p99 | 4–9 | **14–17** |
-| worst frame | 728–1236 ms | **66–82 ms** |
-| shader compiles during play | 34–35 | **0** |
-| boot | ~9–12 s | **3.7–4.6 s** |
+| 최악 프레임 | 728–1236 ms | **66–82 ms** |
+| 플레이 중 셰이더 컴파일 | 34–35 | **0** |
+| 부팅 | ~9–12 s | **3.7–4.6 s** |
 
-The optimization pass was constrained to produce **zero visual change**, enforced by
-`imagediff.mjs` rather than by assertion — the shipped build is bit-identical to its
-pre-optimization reference across all 11 shots.
+최적화 패스는 **시각적으로 0 변화**를 보장하도록 제약됐고, 이는 `imagediff.mjs`(주장 X)로 강제됐다. 출시 빌드는 모든 11 샷에서 최적화 전 참조와 비트 동일하다.
 
-Shader pre-warm (`src/core/prewarm.js`) is what removed the stalls. Making it
-*provably* pixel-neutral required first fixing subsystems that animated off
-`performance.now()` instead of the engine clock, since any change to boot duration
-otherwise shifted output.
+셰이더 프리웜(`src/core/prewarm.js`)이 스톨을 제거했다. 이것이 **픽셀 중립임을 증명**하려면 먼저 `performance.now()` 대신 엔진 클럭을 사용하도록 만든 서브시스템 수정이 선행돼야 했다. 부팅 시간 변화가 그대로 출력으로 새어 들어왔기 때문이다.
 
-## Honest assessment
+## 정직한 자가평가 (원본 그대로)
 
-The goal was to match a modern Call of Duty. **It does not.**
+목표는 모던 Call of Duty에 필적하는 것이었다. **실패했다.**
 
-Eleven independent adversarial critics scored the frames against that bar. Scores
-went 3.59 → 4.14 → 4.05 → **5.05** out of 10. Two shots reached "CLOSE"; the rest
-remain "AMATEUR". In a blind A/B, **every critic in every round picked the real Call
-of Duty frame.**
+11명의 독립된 적대적 비평가(critic)가 CoD 프레임을 기준으로 점수를 매겼다. 점수 흐름은 3.59 → 4.14 → 4.05 → **5.05** / 10. 두 샷이 "CLOSE"에 닿았고 나머지는 "AMATEUR"를 유지한다. 블라인드 A/B에서 **모든 비평자가 모든 라운드에서 진짜 CoD 프레임을 골랐다**.
 
-Where it falls short, specifically:
+부족한 곳을 구체적으로:
 
-- **Hands.** Blocky finger slabs that don't convincingly grip the weapon.
-- **Material richness.** Surfaces read as procedural noise rather than photographed
-  reality at close range — the ceiling of generating texture from code.
-- **Characters.** Enemies read as mannequins at distance.
-- **Indirect light.** An approximation, not real GI.
-- **Frame rate.** 28–30 fps at Retina. The art passes tripled geometry cost
-  (5.9M → 11.3M triangles) and optimization recovered about half.
+- **손.** 무기를 설득력 있게 잡지 못하는 각진 손가락 슬랩.
+- **머티리얼 풍부도.** 표면이 근접 거리에서도 사진이 아닌 프로시저럴 노이즈처럼 읽힌다 — 코드에서 텍스처를 생성하는 것의 천장.
+- **캐릭터.** 적이 원거리에서 마네킹처럼 읽힌다.
+- **간접광.** 근사이며 진짜 GI가 아니다.
+- **프레임 레이트.** Retina에서 28–30 fps. 아트 패스로 지오메트리 비용이 3배(5.9M → 11.3M tri)가 됐고, 최적화가 그중 절반을 회복한 정도.
 
-A known root cause remains unfixed: the viewmodel light rig in `render/index.js`
-delivers roughly 20× the irradiance per unit albedo that the world does — a plain
-*black* material in the view scene renders at L=110 against a background of 91,
-purely from F0=0.04. Every weapon albedo is cheated to a third of physical to
-compensate, which caps material separation on the most-looked-at object in the game.
+알려진 근본 원인이 남아 있다: `render/index.js`의 뷰모델 광원은 월드에 비해 단위 알베도당 약 20× 강한 irradiance를 쏜다. *검정* 머티리얼이 뷰 씬에서 L=110, 배경 91로 렌더링되는 것이 순전히 F0=0.04 때문이다. 모든 무기 알베도를 보정 차원에서 1/3로 깎아서, 가장 많이 보는 오브젝트의 머티리얼 분리가 천장으로 막혀 있다.
 
-## Process note
+## 프로세스 기록 (원본)
 
-Sequential single-owner passes beat parallel fan-out decisively. Three rounds of six
-agents each owning one directory moved the score +0.46 and left frame-ruining defects
-*higher* than they started (60 → 47 → 66), because tonemapping, sky and indirect light
-are one coupled system and isolated agents kept breaking each other's assumptions.
-One sequential pass with a single owner per coupled concern moved it +1.00 and cut
-defects 66 → 26.
+순차 단일-소유 패스가 병렬 fan-out을 결정적으로 이겼다. 디렉터리 하나를 소유한 6명 에이전트 × 3 라운드는 점수를 +0.46 움직였지만 프레임을 망가지는 결함을 **더 많이** 만들었다(60 → 47 → 66). 토노매핑·하늘·간접광이 한 결합 시스템인데 고립된 에이전트가 서로 가정을 깨뜨렸기 때문이다. 결합된 관심사를 단일 소유자가 갖는 순차 패스 한 번이 +1.00을 움직이고 결함을 66 → 26으로 줄였다.
 
-The most valuable single result came from an agent contradicting its own brief. Every
-critic for three rounds reported the weapon as "untextured". It wasn't — it was
-specular-dominated, with the diffuse term measured at L=26 against a shipped L=67.
-Prior rounds had been crushing albedos to fight bright-part complaints, which killed
-diffuse and made it worse. The fix was the opposite of what was asked for.
+가장 가치 있는 단일 결과는 자기 브리프를 스스로 모순한 에이전트에게서 나왔다. 세 라운드 동안 모든 비평자가 "무기에 텍스처가 없다"고 보고했지만 사실은 specular 지배적이어서 디퓨즈 항이 출시 빌드 L=67에 비해 L=26이었다. 이전 라운드들은 밝은 부분 불만에 대응해 알베도를 깎았고, 그게 디퓨즈를 죽여서 더 나빠졌다. 수정은 요청의 정반대였다.
+
+---
+
+## 원본 출처 / Attribution
+
+이 프로젝트는 다음 프로젝트의 포크·한국어화·확장 시도다:
+
+- **원본 저장소:** [mshumer/Claude-of-Duty](https://github.com/mshumer/Claude-of-Duty)
+- **원본 작성자:** Matthew Shumer ([@mshumer](https://github.com/mshumer))
+- **원본 라이선스:** [MIT](./LICENSE) — Copyright (c) 2026 mshumer
+- **원본 사이트:** [shumer.dev/newsletter](https://shumer.dev/newsletter)
+
+MIT 라이선스에 따라 원본의 저작권/허가 표시를 보존한다. 이 fork에서 추가되는 코드도 동일한 MIT 라이선스를 따른다.

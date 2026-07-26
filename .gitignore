@@ -14,3 +14,5 @@ demo/
 .tmp-demo/
 .tmp-rend/
 revcrops/
+# .vercel/ is tracked intentionally — sigco3111 standard pattern
+# (see commits after first deploy for rationale)

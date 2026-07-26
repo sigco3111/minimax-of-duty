@@ -7,8 +7,8 @@
     "preview": "vite preview --port 4173",
     "shot": "node tools/capture.mjs"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Matthew Shumer (mshumer) — original; sigco3111 — fork",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "three": "^0.180.0"

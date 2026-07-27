@@ -441,21 +441,8 @@ export class RenderSystem {
       viewFillOcclusion: 0.45,
       // ---- viewmodel 3-point rig ------------------------------------------
       // The key is scaled off the scene's own light level (see _updateViewRig);
-      // fill, rim, hemi and bounce are ratios of it. The key/fill/rim/hemi
-      // comments below were written by the original rig author and explain
-      // the *intent* of each ratio; the new `viewKeyScale` value (this commit)
-      // is the fix for the overexposure noted in the project README under
-      // "Honest assessment".
-      // First move (this commit): bring the rig's key + fill ratios so the
-      // view rig delivers the same per-albedo irradiance the world does.
-      // `viewKeyScale` 0.55 -> 0.42 (24% drop) lowers the key 2.53 -> 1.93.
-      // Combined with `viewFillRatio` 0.30, `viewRimRatio` 0.50,
-      // `viewHemiRatio` 0.16, `viewBounceRatio` 0.34, the rig drops from
-      // ~5.82 summed directional intensity to ~4.74, near the world's
-      // 4.6 single-sun baseline. Material calibrations remain untouched —
-      // the second move (recover albedo × 3 + specularIntensity 0.5 -> 0.11)
-      // lands in a separate commit on top.
-      viewKeyScale: 0.42,
+      // fill, rim, hemi and bounce are ratios of it.
+      viewKeyScale: 0.55,
       viewKeyMax: 2.6,
       viewFillRatio: 0.3,
       viewRimRatio: 0.5,

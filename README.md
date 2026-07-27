@@ -11,6 +11,55 @@
 
 ---
 
+## 원본 프롬프트
+
+> *"This is the entire prompt that produced this repository."* (저장소 내 [`prompt.md`](https://github.com/mshumer/Claude-of-Duty/blob/main/prompt.md) 전문, 142단어)
+
+### 영문 원문
+
+> I want you to build a first-person shooter at the level of the most recent Call of Duty games. It should be utterly perfect, visually beautiful, with every single thing done at AAA quality—from textures to physics to anything you could think of.
+>
+> Fan out sub-agents and have sub-agents tackle each one individually so that the game is utterly perfect. You should /loop on each item and have a separate sub-agent check it visually to ensure it looks triple A. That separate sub-agent should be a really harsh critic, and if it doesn't look triple A, it should keep going.
+>
+> Don't stop until each sub-agent is utterly wowed with the quality when compared with the actual Call of Duty game. It should literally compare them side by side blind and say which one looks better. Do this in ThreeJS. /loop until it's utterly perfect. Fan out sub-agents and ultracode.
+
+### 한글 번역
+
+> 최신 Call of Duty 게임 수준에 필적하는 1인칭 슈팅 게임을 만들어 줘. 완벽하고, 시각적으로 아름다우며, 텍스처부터 물리까지 AAA 품질로 모든 게 다뤄져야 해 — 떠올릴 수 있는 모든 것들이.
+>
+> 서브에이전트를 fan out 해서 각자 한 항목씩 맡아 게임이 완벽해지도록 해. 각 항목마다 `/loop` 돌리고, 별도의 서브에이전트가 시각적으로 검수해서 트리플 A급인지 확인해. 그 검수 에이전트는 진짜 깐깐한 비평가여야 하고, 트리플 A가 아니면 계속 가야 해.
+>
+> 진짜 Call of Duty 게임과 비교했을 때 모든 서브에이전트가 품질에 완전히 감동할 때까지 멈추지 마. 블라인드로 나란히 놓고 어느 쪽이 더 좋아 보이는지 비교하게 해. ThreeJS로 해. `/loop` 돌려서 완벽해질 때까지. 서브에이전트 fan out 하고 ultracode로 가.
+
+### 메타 — 5개 키워드
+
+| 키워드 | 의미 |
+|---|---|
+| `Fan out sub-agents` | 멀티에이전트 병렬 분할 |
+| `/loop` | Opus 5 슬래시 명령 — 항목별 무한 루프 |
+| `harsh critic` | 블라인드 A/B 비교 강도 높은 적대적 비평가 |
+| `ultracode` | Opus 5 고강도 코딩 모드 |
+| `utterly wowed` | 비평자가 만족할 때까지 무한 |
+
+### 메타 — 짧은 프롬프트의 무게
+
+이 142단어에는 다음이 **전부 부재**:
+
+- 아키텍처 가이드 (서브시스템 인터페이스, 디렉터리 소유권) — `ARCHITECTURE.md`는 agent 측 자체 산출물
+- 인터페이스 명세 (이벤트 어휘, 공유 surface 타입)
+- 평가 척도 (오직 "side-by-side blind" 한 줄)
+- 자산 규칙 (에셋 0개 제약은 코드에 박혀있을 뿐 프롬프트엔 없음)
+
+**결과** (원본 README 자기평가): 11명 독립 비평가 점수 3.59 → 4.14 → 4.05 → **5.05 / 10**. 두 샷이 "CLOSE"에 닿고 나머지는 "AMATEUR". 블라인드 A/B에서 **모든 비평자가 모든 라운드에서 진짜 CoD 프레임을 골랐다**.
+
+원본 README의 결론 (그대로 옮김):
+
+> 순차 단일-소유 패스가 병렬 fan-out을 결정적으로 이겼다. 결합된 관심사를 단일 소유자가 갖는 순차 패스 한 번이 점수를 +1.00 움직이고 결함을 66 → 26으로 줄였다.
+
+즉 **이 짧은 프롬프트에서 가장 값진 교훈은 "fan-out이 본 작전에서 가장 큰 실수였다"는 자기 인정**. 본 한국어 fork는 같은 실패를 반복하지 않기 위해 직렬 단일-소유 패스로 진행한다.
+
+---
+
 ## 한국어 안내
 
 - **아트 에셋이 전혀 없다.** 텍스처·메시·애니메이션·사운드 전부 코드로 **프로시저럴 생성**. 모델·HDRI·이미지·오디오 파일 일절 없음. 런타임 의존성은 `three` 단 하나.

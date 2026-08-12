@@ -5,7 +5,7 @@
 > 원본은 Opus 5가 멀티에이전트 오케스트레이션으로 약 1.5일 만에 만든 **55,000줄 / 11 서브시스템** 작품이고,
 > 본 fork는 그 결과물을 **한국어 환경에 맞게 재현·확장**하는 것이 목표다.
 
-**🎮 [라이브 데모 (Vercel)](https://minimax-of-duty.vercel.app)**
+**🎮 [라이브 데모 (Vercel)](https://sigco3111.github.io/minimax-of-duty)**
 
 **[원본 저장소](https://github.com/mshumer/Claude-of-Duty)** · **[라이선스: MIT](./LICENSE)** (Copyright 2026 mshumer)
 
